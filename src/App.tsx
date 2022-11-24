@@ -567,7 +567,98 @@ function App() {
     console.log("room details are: ", roomDetails);
 
     const rDetails = JSON.parse(roomDetails);
-    console.log("decoded room details are: ", rDetails["recipients"]);
+    console.log("All Recipients are: ", rDetails["recipients"]);
+
+    const reps = rDetails["recipients"];
+    sendPostMessage(creatorAddr, roomName, postSubject, postBody, reps);
+  }
+
+  async function sendPostMessage(creatorAddr: string, roomName: string, postSubject: string, postBody: string, recipientAccounts: string[]) {
+    if (!ylide) {
+      alert("No ylide sdk initialized. Reload the page");
+      return;
+    }
+    const fromAcc = accounts.find((a) => a.address === creatorAddr);
+    if (!fromAcc) {
+      alert("Specify the room creator...");
+      return;
+    }
+    const state = accountsState[fromAcc.address];
+    if (!state) {
+      console.log("Room creator does not have state initialized. Do the above operations first to register the creator");
+      return;
+    }
+
+    const msgSubject = `POST:${postSubject}`;
+    const msgBody = {
+      "creator_address": fromAcc,
+      "post": postBody,
+      "room": roomName
+    };
+    const content = MessageContentV3.plain(msgSubject, JSON.stringify(msgBody));
+    const msgId = await ylide.sendMessage(
+      {
+        wallet: state.wallet!.wallet,
+        sender: (await state.wallet!.wallet.getAuthenticatedAccount())!,
+        content,
+        recipients: recipientAccounts,
+      },
+      { network: EVMNetwork.ARBITRUM }
+    );
+    alert(`Post Message Sent with MessageId: ${msgId}`);
+    console.log(`Post Message Sent with MessageId: ${msgId}`);
+  }
+
+  async function ReadPostMessages(addr: string, roomName: string) {
+    const r = readers[0];
+    const account = accountsState[addr];
+
+    if (!r || !account) {
+      alert("Please reload the page to make sure readers and accounts have been initialized");
+      return;
+    }
+
+    var addrUnit256 = account.wallet?.wallet.addressToUint256(addr) || null;
+    // console.log("======== account (addrUnit256) is: ", addrUnit256);
+    // console.log("======== account is: ", account);
+    const a = r.addressToUint256(addr);
+    console.log("======== account (addrUnit256) is: ", a);
+
+    const messages = await r.retrieveMessageHistoryByBounds(addr, a);
+    console.log("========= all messages are: ", messages);
+
+    for (var message of messages) {
+      const content = await r.retrieveAndVerifyMessageContent(message);
+      if (!content || content.corrupted) { // check content integrity
+        throw new Error('Content not found or corrupted');
+      }
+      // console.log("content is: ", content);
+      // console.log("message is: ", message);
+      // console.log("======== keystore keys are: ", keystore.get(addr));
+
+      const pubKey = account.localKey?.publicKey;
+      if (pubKey) {
+        const decodedContent = await ylide?.decryptMessageContent(
+          {
+            address: addr || "",
+            blockchain: "evm",
+            publicKey: PublicKey.fromPackedBytes(pubKey),
+          }, // recipient account
+          message, // message header
+          content, // message content
+        );
+        // console.log("======== decoded content is: ", decodedContent);
+        if (decodedContent?.subject.startsWith("POST")) {
+          console.log(`got a post with subject: ${decodedContent.subject.split(":")[1]} with data: ${decodedContent.content}. and room: ${roomName}`);
+          const sub = decodedContent.subject.split(":")[1];
+          const msg = JSON.parse(decodedContent.content);
+          console.log(`Post subject: ${sub}, body: ${msg["post"]}`);
+        }
+      } else {
+        console.log("========= no public key!");
+        alert("make sure generate and publish functions have been called and app state is initialized");
+      }
+    }
   }
 
   return (
@@ -700,6 +791,18 @@ function App() {
               </div>
               <div className='container mt-2'>
                 <Button onClick={() => CreatePost("WhisperingRoom01", "Random Post01", "Random Post Body01", accounts[0].address)}>Create Post for Room: WhisperingRoom01 created by {accounts[0].address}</Button>
+              </div>
+            </Accordion.Body>
+          </Accordion.Item>
+
+          <Accordion.Item eventKey="9">
+            <Accordion.Header>Read Posts from: WhisperingRoom01, for user: 0x9a9b3fbb7c83d82e7cf696d6f2ecca35ba00c356</Accordion.Header>
+            <Accordion.Body>
+              <div className='container'>
+                This will read all messages sent to the address: 0x9a9b3fbb7c83d82e7cf696d6f2ecca35ba00c356
+              </div>
+              <div className='container mt-2'>
+                <Button onClick={() => ReadPostMessages("0x9a9b3fbb7c83d82e7cf696d6f2ecca35ba00c356", "WhisperingRoom01")}>Read All Posts for user: 0x9a9b3fbb7c83d82e7cf696d6f2ecca35ba00c356</Button>
               </div>
             </Accordion.Body>
           </Accordion.Item>
