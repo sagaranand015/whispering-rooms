@@ -467,42 +467,39 @@ function App() {
 
     var addrUnit256 = account.wallet?.wallet.addressToUint256(addr) || null;
     console.log("======== account (addrUnit256) is: ", addrUnit256);
-    console.log("======== account is: ", account);
-    // const m = r.retrieveMessageHistoryByTime
+    // console.log("======== account is: ", account);
     const a = r.addressToUint256(addr);
-    // const messages = await r.retrieveMessageHistoryByBounds(addr, a).then(function (resp) {
-    //   console.log("========= messages are[1]: ", resp);
-    // });
     const messages = await r.retrieveMessageHistoryByBounds(addr, a);
-    console.log("========= messages are[2]: ", messages);
-    // await r.retrieveBroadcastHistoryByBounds(addrUnit256).then(function (resp) {
-    //   console.log("========= messages are: ", resp);
-    // });
+    console.log("========= all messages are: ", messages);
 
+    for (var message of messages) {
+      const content = await r.retrieveAndVerifyMessageContent(message);
+      if (!content || content.corrupted) { // check content integrity
+        throw new Error('Content not found or corrupted');
+      }
+      // console.log("content is: ", content);
+      // console.log("message is: ", message);
+      // console.log("======== keystore keys are: ", keystore.get(addr));
 
-    const message = messages[1];
-    const content = await r.retrieveAndVerifyMessageContent(message);
-    if (!content || content.corrupted) { // check content integrity
-      throw new Error('Content not found or corrupted');
-    }
-    console.log("content is: ", content);
-
-    console.log("======== keystore keys are: ", keystore.get(message.recipientAddress));
-
-    const pubKey = account.localKey?.publicKey;
-    if (pubKey) {
-      const decodedContent = await ylide?.decryptMessageContent(
-        {
-          address: addr || "",
-          blockchain: "evm",
-          publicKey: PublicKey.fromPackedBytes(pubKey),
-        }, // recipient account
-        message, // message header
-        content, // message content
-      );
-      console.log("======== decoded content is: ", decodedContent);
-    } else {
-      console.log("========= no public key!");
+      const pubKey = account.localKey?.publicKey;
+      if (pubKey) {
+        const decodedContent = await ylide?.decryptMessageContent(
+          {
+            address: addr || "",
+            blockchain: "evm",
+            publicKey: PublicKey.fromPackedBytes(pubKey),
+          }, // recipient account
+          message, // message header
+          content, // message content
+        );
+        // console.log("======== decoded content is: ", decodedContent);
+        if (decodedContent?.subject.startsWith("ROOM CREATED")) {
+          console.log(`got a room: ${decodedContent.subject.split(":")[1]} with data: ${decodedContent.content}`);
+        }
+      } else {
+        console.log("========= no public key!");
+        alert("make sure generate and publish functions have been called and app state is initialized");
+      }
     }
   }
 
@@ -558,25 +555,25 @@ function App() {
           </Accordion.Item>
 
           <Accordion.Item eventKey="3">
-            <Accordion.Header>Generate New Key for account: {accounts[0].address}</Accordion.Header>
+            <Accordion.Header>Generate New Key for account: {accounts[1].address}</Accordion.Header>
             <Accordion.Body>
               <div className='container'>
-                This will generate a new key locally for the account {accounts[0].address} and store it in browser localStorage.
+                This will generate a new key locally for the account {accounts[1].address} and store it in browser localStorage.
               </div>
               <div className='container mt-2'>
-                <Button onClick={() => generateKey(accounts[0].wallet, accounts[0].address)}>Generate key for {accounts[0].address}</Button>
+                <Button onClick={() => generateKey(accounts[1].wallet, accounts[1].address)}>Generate key for {accounts[1].address}</Button>
               </div>
             </Accordion.Body>
           </Accordion.Item>
 
           <Accordion.Item eventKey="4">
-            <Accordion.Header>Publish key for account: {accounts[0].address}</Accordion.Header>
+            <Accordion.Header>Publish key for account: {accounts[1].address}</Accordion.Header>
             <Accordion.Body>
               <div className='container'>
-                This will publish the locally available key for the account {accounts[0].address} to the selected blockchain(ARBITRUM).
+                This will publish the locally available key for the account {accounts[1].address} to the selected blockchain(ARBITRUM).
               </div>
               <div className='container mt-2'>
-                <Button onClick={() => publishKey(accounts[0].wallet, accounts[0].address)}>Publish key for {accounts[0].address}</Button>
+                <Button onClick={() => publishKey(accounts[1].wallet, accounts[1].address)}>Publish key for {accounts[1].address}</Button>
               </div>
             </Accordion.Body>
           </Accordion.Item>
@@ -603,15 +600,15 @@ function App() {
           </Accordion.Item>
 
           <Accordion.Item eventKey="6">
-            <Accordion.Header>See all rooms for address: {PLATFORM_ADDRESS}</Accordion.Header>
+            <Accordion.Header>See all rooms for address: 0x9A9B3fBb7c83D82E7cF696d6F2ecCa35Ba00C356</Accordion.Header>
             <Accordion.Body>
               <div className='container'>
                 This will list down all the rooms that the given user is a part of. We read all messages sent to this address
                 and see the message where subject starts with [ROOM CREATED]. <br />
-                Note: Make sure this address has been registered with Ylide and all data is available in the app state for this user {PLATFORM_ADDRESS}
+                Note: Make sure this address has been registered with Ylide and all data is available in the app state for this user 0x9A9B3fBb7c83D82E7cF696d6F2ecCa35Ba00C356
               </div>
               <div className='container mt-2'>
-                <Button onClick={() => GetMyRooms(PLATFORM_ADDRESS)}>Get all rooms for: {PLATFORM_ADDRESS}</Button>
+                <Button onClick={() => GetMyRooms("0x9a9b3fbb7c83d82e7cf696d6f2ecca35ba00c356")}>Get all rooms for: 0x9A9B3fBb7c83D82E7cF696d6F2ecCa35Ba00C356</Button>
               </div>
             </Accordion.Body>
           </Accordion.Item>
