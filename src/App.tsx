@@ -437,6 +437,7 @@ function App() {
     }
 
     const createRoomSubject = `ROOM CREATED:${roomName}`;
+    recipientAccounts.push(creatorAddr);
     const createRoomBody = {
       "creator_address": fromAcc,
       "roomName": roomName,
@@ -501,6 +502,72 @@ function App() {
         alert("make sure generate and publish functions have been called and app state is initialized");
       }
     }
+  }
+
+  async function GetUserRoomDetails(addr: string, roomName: string) {
+    const r = readers[0];
+    const account = accountsState[addr];
+
+    if (!r || !account) {
+      alert("Please reload the page to make sure readers and accounts have been initialized");
+      return;
+    }
+
+    var addrUnit256 = account.wallet?.wallet.addressToUint256(addr) || null;
+    // console.log("======== account (addrUnit256) is: ", addrUnit256);
+    // console.log("======== account is: ", account);
+    const a = r.addressToUint256(addr);
+    console.log("======== account (addrUnit256) is: ", a);
+
+    const messages = await r.retrieveMessageHistoryByBounds(addr, a);
+    console.log("========= all messages are: ", messages);
+
+    for (var message of messages) {
+      const content = await r.retrieveAndVerifyMessageContent(message);
+      if (!content || content.corrupted) { // check content integrity
+        throw new Error('Content not found or corrupted');
+      }
+      // console.log("content is: ", content);
+      // console.log("message is: ", message);
+      // console.log("======== keystore keys are: ", keystore.get(addr));
+
+      const pubKey = account.localKey?.publicKey;
+      if (pubKey) {
+        const decodedContent = await ylide?.decryptMessageContent(
+          {
+            address: addr || "",
+            blockchain: "evm",
+            publicKey: PublicKey.fromPackedBytes(pubKey),
+          }, // recipient account
+          message, // message header
+          content, // message content
+        );
+        // console.log("======== decoded content is: ", decodedContent);
+        if (decodedContent?.subject.startsWith("ROOM CREATED")) {
+          console.log(`got a room: ${decodedContent.subject.split(":")[1]} with data: ${decodedContent.content}. Asked room: ${roomName}`);
+          const rName = decodedContent.subject.split(":")[1];
+          if (rName == roomName) {
+            return decodedContent.content;
+          }
+        }
+      } else {
+        console.log("========= no public key!");
+        alert("make sure generate and publish functions have been called and app state is initialized");
+      }
+    }
+  }
+
+  async function GetCreatorRoomByName(roomName: string, creatorAddr: string) {
+    const roomDetails = await GetUserRoomDetails(creatorAddr, roomName);
+    console.log("room details are: ", roomDetails);
+  }
+
+  async function CreatePost(roomName: string, postSubject: string, postBody: string, creatorAddr: string) {
+    const roomDetails = await GetUserRoomDetails(creatorAddr, roomName);
+    console.log("room details are: ", roomDetails);
+
+    const rDetails = JSON.parse(roomDetails);
+    console.log("decoded room details are: ", rDetails["recipients"]);
   }
 
   return (
@@ -609,6 +676,30 @@ function App() {
               </div>
               <div className='container mt-2'>
                 <Button onClick={() => GetMyRooms("0x9a9b3fbb7c83d82e7cf696d6f2ecca35ba00c356")}>Get all rooms for: 0x9A9B3fBb7c83D82E7cF696d6F2ecCa35Ba00C356</Button>
+              </div>
+            </Accordion.Body>
+          </Accordion.Item>
+
+          <Accordion.Item eventKey="7">
+            <Accordion.Header>Show all room details for room: WhisperingRoom01 by creator</Accordion.Header>
+            <Accordion.Body>
+              <div className='container'>
+                This will show up all the room details of the room created by the user in the previous steps
+              </div>
+              <div className='container mt-2'>
+                <Button onClick={() => GetCreatorRoomByName("WhisperingRoom01", accounts[0].address)}>Get Creator({accounts[0].address}) Room(WhisperingRoom01) Details (See Console for Details)</Button>
+              </div>
+            </Accordion.Body>
+          </Accordion.Item>
+
+          <Accordion.Item eventKey="8">
+            <Accordion.Header>Create Post for all members of the room: WhisperingRoom01</Accordion.Header>
+            <Accordion.Body>
+              <div className='container'>
+                This will send a message to all recipients of the room that the creator has created in the previous step.
+              </div>
+              <div className='container mt-2'>
+                <Button onClick={() => CreatePost("WhisperingRoom01", "Random Post01", "Random Post Body01", accounts[0].address)}>Create Post for Room: WhisperingRoom01 created by {accounts[0].address}</Button>
               </div>
             </Accordion.Body>
           </Accordion.Item>
