@@ -574,8 +574,8 @@ function App() {
         message: postBody,
         sentTime: "just now",
         sender: fromAcc.address,
-        direction: "incoming",
-        position: "last",
+        direction: "outgoing",
+        position: "normal",
       }
     ])
   }
@@ -621,14 +621,13 @@ function App() {
           const sub = decodedContent.subject.split(":")[1];
           const msg = JSON.parse(decodedContent.content);
           console.log(`Post subject: ${sub}, body: ${msg}, room: ${msg['room']}`);
-          console.log(msg);
           if (msg['room'] == roomName) {
             allMsgs.push({
               'msg': msg,
-              'sub': sub
+              'sub': sub,
+              'sender': message.senderAddress,
             });
           }
-
         }
       } else {
         console.log("========= no public key!");
@@ -777,16 +776,18 @@ function App() {
     setSelectedRoom(selectedRoom);
 
     if (!gotMsgs) return;
-    const messages: MessageModel[] = gotMsgs.map(message => { return {
-      message: message.msg.post,
-      sentTime: "just now",
-      sender: message.sub,
-      direction: "incoming",
-      position: "last",
-    }});
+    const messages: MessageModel[] = gotMsgs.map(message => {
+      return {
+        message: message.msg.post,
+        sentTime: "just now",
+        sender: message.sender,
+        direction: message.sender.toLowerCase() === currAcc.address.toLowerCase() ? "outgoing" : "incoming",
+        position: "normal",
+      }
+    });
     console.log('message models:', messages)
     setSelectedRoomMsgs(messages);
-    //handleRoomMsgsModalShow();
+    handleRoomMsgsModalShow();
   }
 
   // async function CreatePostMessageForRoom(selectedRoom: string | null) {
@@ -1040,37 +1041,30 @@ function App() {
         </Form>
       </Modal>
 
-      {/* <Modal
+      <Modal
         show={roomMsgsModal}
         onHide={handleRoomMsgsModalClose}
         keyboard={false}
         size='lg'
       >
         <Modal.Header closeButton>
-          <Modal.Title>Showing Posts for {selectedRoomMsgs?.roomName}</Modal.Title>
+          <Modal.Title>Showing Posts for {selectedRoom}</Modal.Title>
         </Modal.Header>
-        <Form>
-          <Modal.Body>
-            {selectedRoomMsgs?.posts?.map(p => (
-              <Alert variant="success">
-                <Alert.Heading>{p.sub}</Alert.Heading>
-                <p>
-                  {p.msg.post}
-                </p>
-                <hr />
-                {/* <p className="mb-0">
-                  Message Sent Privately to you! Make sure no one looks at your screen!
-                </p>
-              </Alert>
-            ))}
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={handleRoomMsgsModalClose}>
-              Close
-            </Button>
-          </Modal.Footer>
-        </Form>
-      </Modal> */}
+
+        <div style={{ position: "relative", height: "500px" }}>
+          <MainContainer>
+            <ChatContainer>
+              <MessageList>
+                {selectedRoomMsgs && selectedRoomMsgs.map(message => (
+                  <Message model={message} />
+                ))}
+              </MessageList>
+              <MessageInput attachButton={false} placeholder="Type message here" onSend={handleSendMessage} disabled={!selectedRoom} />
+            </ChatContainer>
+          </MainContainer>
+        </div>
+
+      </Modal>
 
       {/* <Modal
         show={createPostModal}
@@ -1103,18 +1097,6 @@ function App() {
         </Form>
       </Modal> */}
 
-      <div style={{ position: "relative", height: "500px" }}>
-        <MainContainer>
-          <ChatContainer>
-            <MessageList>
-              {selectedRoomMsgs && selectedRoomMsgs.map(message => (
-                <Message model={message} />
-              ))}
-            </MessageList>
-            <MessageInput attachButton={false} placeholder="Type message here" onSend={handleSendMessage} />
-          </ChatContainer>
-        </MainContainer>
-      </div>
     </div >
   );
 }
