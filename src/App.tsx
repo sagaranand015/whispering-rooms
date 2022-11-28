@@ -1,6 +1,4 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import logo from './logo.svg';
-import './App.css';
 import './assets/css/style.css';
 
 import { evmFactories, ethereumWalletFactory, EVMNetwork, EVM_NAMES } from '@ylide/ethereum';
@@ -12,6 +10,10 @@ import {
 } from "@ylide/everscale";
 import { Accordion, Alert, Button, Card, CardGroup, Col, Form, Modal, Row } from 'react-bootstrap';
 import { PLATFORM_ADDRESS } from './constants';
+import { ChatContainer, MainContainer, Message, MessageInput, MessageList } from '@chatscope/chat-ui-kit-react';
+
+import "@chatscope/chat-ui-kit-styles/dist/default/styles.min.css";
+import './App.css';
 
 import { Navbar, Container, Nav, Dropdown } from "react-bootstrap";
 import CardHeader from 'react-bootstrap/esm/CardHeader';
@@ -98,8 +100,8 @@ function App() {
   }, [currRooms]);
 
   /*
-  [START] USE EFFECTS FOR INITIALIZING THE STATE VARIABLES ON APP LOAD. 
-  WE CAN DO THIS ON USER INTERACTION TOO, ITS JUST BETTER TO MAKE SURE WE INITIALIZE 
+  [START] USE EFFECTS FOR INITIALIZING THE STATE VARIABLES ON APP LOAD.
+  WE CAN DO THIS ON USER INTERACTION TOO, ITS JUST BETTER TO MAKE SURE WE INITIALIZE
   THE APP PROPERLY WHEN WE ALREADY HAVE THE REQUIRED DATA
   */
 
@@ -150,7 +152,7 @@ function App() {
   }, [ylide]);
 
   // useEffect to setup the account states with associated wallets and local/remote keys.
-  // this will register the remoteKey if available from ylide, 
+  // this will register the remoteKey if available from ylide,
   // otherwise we'll have to ask the user to publish their keys to the selected blockchain
   useEffect(() => {
     if (!wallets.length) {
@@ -278,8 +280,8 @@ function App() {
     })();
   }, []);
   /*
-  [END] USE EFFECTS FOR INITIALIZING THE STATE VARIABLES ON APP LOAD. 
-  WE CAN DO THIS ON USER INTERACTION TOO, ITS JUST BETTER TO MAKE SURE WE INITIALIZE 
+  [END] USE EFFECTS FOR INITIALIZING THE STATE VARIABLES ON APP LOAD.
+  WE CAN DO THIS ON USER INTERACTION TOO, ITS JUST BETTER TO MAKE SURE WE INITIALIZE
   THE APP PROPERLY WHEN WE ALREADY HAVE THE REQUIRED DATA
   */
 
@@ -1081,6 +1083,25 @@ function App() {
           </Modal.Footer>
         </Form>
       </Modal>
+
+      <div style={{ position: "relative", height: "500px" }}>
+        <MainContainer>
+          <ChatContainer>
+            <MessageList>
+              <Message
+                model={{
+                  message: "Hello my friend",
+                  sentTime: "just now",
+                  sender: "Joe",
+                  direction: "incoming",
+                  position: "last",
+                }}
+              />
+            </MessageList>
+            <MessageInput placeholder="Type message here" />
+          </ChatContainer>
+        </MainContainer>
+      </div>
     </div >
   );
 }
