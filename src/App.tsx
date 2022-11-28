@@ -14,6 +14,7 @@ import { PLATFORM_ADDRESS } from './constants';
 
 import { Navbar, Container, Nav, Dropdown } from "react-bootstrap";
 import CardHeader from 'react-bootstrap/esm/CardHeader';
+import { IntroPage } from './components/IntroPage';
 
 // Ylide.registerBlockchainFactory(evmFactories[EVMNetwork.POLYGON]);
 // Ylide.registerBlockchainFactory(evmFactories[EVMNetwork.ETHEREUM]);
@@ -87,6 +88,11 @@ function App() {
   /*
   [END] STATE VARIABLES FOR STORING ACCOUNTS, WALLETS AND ALL ASSOICATED DATA
    */
+
+  const [currRooms, setCurrRooms] = useState<{ roomName: string | null, roomData: JSON, recipients: [] }[]>([]);
+  useEffect(() => {
+    console.log("========= UPDATED ROOMS ARE: ", currRooms);
+  }, [currRooms]);
 
   /*
   [START] USE EFFECTS FOR INITIALIZING THE STATE VARIABLES ON APP LOAD. 
@@ -407,28 +413,20 @@ function App() {
   async function GetMyRooms(addr: string) {
     const r = readers[0];
     const account = accountsState[addr];
-
     if (!r || !account) {
       alert("Please reload the page to make sure readers and accounts have been initialized");
       return;
     }
-
-    var addrUnit256 = account.wallet?.wallet.addressToUint256(addr) || null;
-    console.log("======== account (addrUnit256) is: ", addrUnit256);
-    // console.log("======== account is: ", account);
     const a = r.addressToUint256(addr);
     const messages = await r.retrieveMessageHistoryByBounds(addr, a);
     console.log("========= all messages are: ", messages);
 
+    let roomsArr = []
     for (var message of messages) {
       const content = await r.retrieveAndVerifyMessageContent(message);
       if (!content || content.corrupted) { // check content integrity
         throw new Error('Content not found or corrupted');
       }
-      // console.log("content is: ", content);
-      // console.log("message is: ", message);
-      // console.log("======== keystore keys are: ", keystore.get(addr));
-
       const pubKey = account.localKey?.publicKey;
       if (pubKey) {
         const decodedContent = await ylide?.decryptMessageContent(
@@ -443,12 +441,18 @@ function App() {
         // console.log("======== decoded content is: ", decodedContent);
         if (decodedContent?.subject.startsWith("ROOM CREATED")) {
           console.log(`got a room: ${decodedContent.subject.split(":")[1]} with data: ${decodedContent.content}`);
+          roomsArr.push({
+            'roomName': decodedContent.subject.split(":")[1],
+            'roomData': JSON.parse(decodedContent.content),
+            'recipients': JSON.parse(decodedContent.content)['recipients']
+          })
         }
       } else {
         console.log("========= no public key!");
         alert("make sure generate and publish functions have been called and app state is initialized");
       }
     }
+    setCurrRooms(roomsArr);
   }
 
   async function GetUserRoomDetails(addr: string, roomName: string) {
@@ -710,8 +714,41 @@ function App() {
             </Row>
           </Container>
           :
-          "Nothing to see here!"
+          <IntroPage />
       }
+
+      {currAcc && currRooms.length > 0 ? <Container fluid>
+        <CardGroup>
+          {currRooms.map(r => (
+            <Card>
+              <div className="card-image">
+                <img
+                  alt="Room Placeholder Image"
+                  src='https://via.placeholder.com/600x200.png'
+                ></img>
+              </div>
+              <Card.Body>
+                <Card.Title>{r.roomName}</Card.Title>
+                <Card.Text>
+                  Your Private Room with {r.recipients.length - 2} recipients. This room remains private and only the recipients can see your messages!
+                </Card.Text>
+              </Card.Body>
+              <hr></hr>
+              <div className="button-container mr-auto ml-auto mb-2 justify-content-right align-items-right">
+                <Button
+                  className="btn-simple btn-icon"
+                  href="#pablo"
+                  onClick={(e) => e.preventDefault()}
+                  size='sm'
+                  variant="primary"
+                >
+                  Enter Room
+                </Button>
+              </div>
+            </Card>
+          ))}
+        </CardGroup>
+      </Container> : <Container fluid><h4>Loading Room list... Please wait</h4></Container>}
 
       {/* <header className="App-header">
         <Accordion defaultActiveKey="0" className='container'>
