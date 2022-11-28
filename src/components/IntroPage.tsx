@@ -2,23 +2,15 @@ import { Button, ButtonGroup, Image, Modal } from "react-bootstrap";
 
 export function IntroPage() {
     return (
-        <header id="header" className="header">
+        <div className="banner" >
             <div className="container">
-                <div className="row">
-                    <div className="col-lg-6 col-xl-5">
-                        <div className="text-container">
-                            <h1 className="h1-large">Find influencers for your products</h1>
-                            <p className="p-large">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut dignissim, neque ut ultrices sollicitudin</p>
-                            <a className="btn-solid-lg" href="#services">Offered services</a>
-                        </div>
-                    </div>
-                    <div className="col-lg-6 col-xl-7">
-                        <div className="image-container">
-                            <img className="img-fluid" src="assets/images/header-image.png" alt="alternative" />
-                        </div>
-                    </div>
+                <h1 className="font-weight-semibold">Search engine optimisation &<br />Marketing.</h1>
+                <h6 className="font-weight-normal text-muted pb-3">Simple is a simple template with a creative design that solves all your marketing and SEO queries.</h6>
+                <div>
+                    <Button variant="primary" className="btn btn-opacity-light mr-1">Get started</Button>
                 </div>
+                <img src="images/Group171.svg" alt="" className="img-fluid" />
             </div>
-        </header>
+        </div>
     );
 }

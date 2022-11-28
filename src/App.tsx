@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import logo from './logo.svg';
 import './App.css';
+import './assets/css/style.css';
 
 import { evmFactories, ethereumWalletFactory, EVMNetwork, EVM_NAMES } from '@ylide/ethereum';
 import { AbstractBlockchainController, AbstractWalletController, BrowserLocalStorage, MessageContentV3, MessagesList, PublicKey, WalletControllerFactory, Ylide, YlideKeyPair, YlideKeyStore } from '@ylide/sdk';
@@ -9,7 +10,7 @@ import {
   everscaleWalletFactory,
   uint256ToAddress,
 } from "@ylide/everscale";
-import { Accordion, Button, Card, CardGroup, Col, Form, Modal, Row } from 'react-bootstrap';
+import { Accordion, Alert, Button, Card, CardGroup, Col, Form, Modal, Row } from 'react-bootstrap';
 import { PLATFORM_ADDRESS } from './constants';
 
 import { Navbar, Container, Nav, Dropdown } from "react-bootstrap";
@@ -508,6 +509,18 @@ function App() {
     }
   }
 
+  function isRoomAdmin(roomData: any) {
+    if (!currAcc) {
+      alert("Please connect wallet to proceed");
+      return false;
+    }
+    if (roomData['creator_address']['address'] == currAcc.address) {
+      console.log("Admin room detected!", currAcc.address, roomData['creator_address']['address']);
+      return true;
+    }
+    return false;
+  }
+
   async function GetCreatorRoomByName(roomName: string, creatorAddr: string) {
     const roomDetails = await GetUserRoomDetails(creatorAddr, roomName);
     console.log("room details are: ", roomDetails);
@@ -673,17 +686,40 @@ function App() {
   const handleOnboardModalClose = () => setOnboardModal(false);
   const handleOnboardModalShow = () => setOnboardModal(true);
 
+  const [roomMsgsModal, setRoomMsgsModal] = useState(false);
+  const handleRoomMsgsModalClose = () => setRoomMsgsModal(false);
+  const handleRoomMsgsModalShow = () => setRoomMsgsModal(true);
+
+  const [createPostModal, setCreatePostModal] = useState(false);
+  const handleCreatePostModalClose = () => setCreatePostModal(false);
+  const handleCreatePostModalShow = () => setCreatePostModal(true);
+
+  const [selectedRoomMsgs, setSelectedRoomMsgs] = useState<{
+    'roomName': string,
+    'posts': { msg: any; sub: string; }[] | undefined
+  } | undefined>();
+
   async function submitCreateRoomForm() {
     const rNameText = (document.getElementById('txtRoomName') as HTMLInputElement).value;
     const rRepsText = (document.getElementById('txtRoomReps') as HTMLInputElement).value;
     const allResp = rRepsText.split(',');
-    allResp.push(PLATFORM_ADDRESS);
     if (currAcc) {
-      allResp.push(currAcc.address);
       console.log("======= all data in array: ", allResp);
       await createRoom(rNameText, currAcc?.address, allResp);
       alert("Room Created Successfully!");
       handleCreateRoomClose();
+    } else {
+      alert("Account not connected.. please connect account");
+    }
+  }
+
+  async function submitCreatePostModal() {
+    const pTitle = (document.getElementById('txtPostTitle') as HTMLInputElement).value;
+    const pBody = (document.getElementById('txtPostBody') as HTMLInputElement).value;
+    if (currAcc && selectedRoomMsgs) {
+      await CreatePost(selectedRoomMsgs?.roomName, pTitle, pBody, currAcc.address);
+      alert("Post Created Successfully!");
+      handleCreatePostModalClose();
     } else {
       alert("Account not connected.. please connect account");
     }
@@ -716,6 +752,27 @@ function App() {
     }
     const gotMsgs = await ReadPostMessages(currAcc.address, selectedRoom);
     console.log("========== all posts data is: ", gotMsgs);
+    setSelectedRoomMsgs({
+      'roomName': selectedRoom,
+      'posts': gotMsgs
+    });
+    handleRoomMsgsModalShow();
+  }
+
+  async function CreatePostMessageForRoom(selectedRoom: string | null) {
+    if (!currAcc) {
+      alert("Please connect your wallet to be able to generate Communication Keys");
+      return;
+    }
+    if (!selectedRoom) {
+      alert("No Room selected!");
+      return;
+    }
+    setSelectedRoomMsgs({
+      'roomName': selectedRoom,
+      'posts': []
+    });
+    handleCreatePostModalShow();
   }
 
   return (
@@ -731,7 +788,7 @@ function App() {
               <i className="fas fa-ellipsis-v"></i>
             </Button>
             <Navbar.Brand
-              href="#home"
+              href="#"
               className="mr-2"
             >
               Whispering Rooms
@@ -771,7 +828,53 @@ function App() {
             </Row>
           </Container>
           :
-          <IntroPage />
+          // <IntroPage />
+          <div className='banner'>
+            <div className="container">
+              <h1 className="font-weight-semibold">Whisper to <b>Anyone</b> &<br />Everyone.</h1>
+              <h6 className="font-weight-normal text-muted pb-3">Without speaking. <b>Whisper</b> what you have to say, without letting anyone hear you! </h6>
+              <h6 className="font-weight-normal text-muted pb-3">
+                Use our Whispering Rooms to create a private and secure chatting room with other Web3 Users, and send encrypted messages to their addresses! <br />
+                Using the power of blockchain and Ylide, whisper away your private communications without worrying about third parties eavesdropping on your privacy.
+              </h6>
+              <div>
+                <Button variant="primary" className="btn btn-opacity-light mr-1" onClick={() => addAccount(walletsList[0].factory)}>Get started</Button>
+              </div>
+              <img src={require('./assets/img/Group171.svg')} alt="" className="img-fluid" ></img>
+            </div>
+
+            <br />
+            <br />
+            <section className="features-overview" id="features-section" >
+              <div className="content-header">
+                <h2>How does it works</h2>
+                <h6 className="section-subtitle text-muted">One Stop Platform for making sure your conversations always stay private, and only accessible to you!</h6>
+              </div>
+              <div className="d-md-flex justify-content-between">
+                <div className="grid-margin d-flex justify-content-start">
+                  <div className="features-width">
+                    <img src="images/Group12.svg" alt="" className="img-icons" />
+                    <h5 className="py-3">Web3<br />First</h5>
+                    <p className="text-muted">We use the power of cryptography to make encrypt all communications on blockchain</p>
+                  </div>
+                </div>
+                <div className="grid-margin d-flex justify-content-center">
+                  <div className="features-width">
+                    <img src="images/Group7.svg" alt="" className="img-icons" />
+                    <h5 className="py-3">Cross-Chain<br />Platform</h5>
+                    <p className="text-muted">Whispering Rooms can be created cross-chain, without limiting the power of secure communications to a single ecosystem</p>
+                  </div>
+                </div>
+                <div className="grid-margin d-flex justify-content-end">
+                  <div className="features-width">
+                    <img src="images/Group5.svg" alt="" className="img-icons" />
+                    <h5 className="py-3">Whisper<br />Loudly</h5>
+                    <p className="text-muted">Just keep your wallet and Comms Private Key to yourself, no one will be able to see your communications by any means!</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
       }
 
       {currAcc && currRooms.length > 0 ? <Container fluid>
@@ -788,27 +891,40 @@ function App() {
                 </div>
                 <Card.Body>
                   <Card.Title>{r.roomName}</Card.Title>
-                  <Card.Text>
-                    Your Private Room with {r.recipients.length - 2} recipients. This room remains private and only the recipients can see your messages!
-                  </Card.Text>
+                  {isRoomAdmin(r.roomData) ?
+                    <Card.Text>
+                      Your Private Room {r.roomName} with {r.recipients.length - 1} recipients. This room remains private and only the recipients can see your messages!
+                    </Card.Text>
+                    :
+                    <Card.Text>
+                      Your Private Access is authorized for {r.roomName}
+                    </Card.Text>
+                  }
                 </Card.Body>
                 <hr></hr>
                 <div className="button-container mr-auto ml-auto mb-2 justify-content-right align-items-right">
                   <Button
                     className="btn-simple btn-icon"
-                    href="#"
                     onClick={() => SeeRoomMessages(r.roomName)}
                     size='sm'
                     variant="primary"
                   >
                     Show My Messages
                   </Button>
+                  {isRoomAdmin(r.roomData) ? <Button
+                    className="btn-simple btn-icon ml-2"
+                    onClick={() => CreatePostMessageForRoom(r.roomName)}
+                    size='sm'
+                    variant="primary"
+                  >
+                    Create New Post
+                  </Button> : ""}
                 </div>
               </Card>
             </Col>
           ))}
         </Row>
-      </Container> : <Container fluid><h4>Loading Room list... Please wait</h4></Container>}
+      </Container> : <Container fluid></Container>}
 
       <Modal
         show={createRoomModal}
@@ -866,119 +982,68 @@ function App() {
         </Form>
       </Modal>
 
-      {/* <header className="App-header">
-        <Accordion defaultActiveKey="0" className='container'>
+      <Modal
+        show={roomMsgsModal}
+        onHide={handleRoomMsgsModalClose}
+        keyboard={false}
+        size='lg'
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Showing Posts for {selectedRoomMsgs?.roomName}</Modal.Title>
+        </Modal.Header>
+        <Form>
+          <Modal.Body>
+            {selectedRoomMsgs?.posts?.map(p => (
+              <Alert variant="success">
+                <Alert.Heading>{p.sub}</Alert.Heading>
+                <p>
+                  {p.msg.post}
+                </p>
+                <hr />
+                {/* <p className="mb-0">
+                  Message Sent Privately to you! Make sure no one looks at your screen!
+                </p> */}
+              </Alert>
+            ))}
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={handleRoomMsgsModalClose}>
+              Close
+            </Button>
+          </Modal.Footer>
+        </Form>
+      </Modal>
 
-          <Accordion.Item eventKey="2">
-            <Accordion.Header>See all Connected Accounts</Accordion.Header>
-            <Accordion.Body>
-              <div className='container'>
-                This will display all the connected accounts in the browser console. These accounts have been added to the state and have been registered with the Ylide SDK as well
-              </div>
-              <div className='container mt-2'>
-                <Button onClick={getAddedAccounts}>See all added accounts</Button>
-              </div>
-            </Accordion.Body>
-          </Accordion.Item>
+      <Modal
+        show={createPostModal}
+        onHide={handleCreatePostModalClose}
+        backdrop="static"
+        keyboard={false}
+        size='lg'
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Create a new Post for {selectedRoomMsgs?.roomName}</Modal.Title>
+        </Modal.Header>
+        <Form>
+          <Modal.Body>
+            <Form.Group className="mb-3" controlId="txtPostTitle">
+              <Form.Label>Post Title</Form.Label>
+              <Form.Control type="text" placeholder="Enter Post Title for your secret Post" />
+            </Form.Group>
 
-          <Accordion.Item eventKey="3">
-            <Accordion.Header>Generate New Key for account: {accounts[1].address}</Accordion.Header>
-            <Accordion.Body>
-              <div className='container'>
-                This will generate a new key locally for the account {accounts[1].address} and store it in browser localStorage.
-              </div>
-              <div className='container mt-2'>
-                <Button onClick={() => generateKey(accounts[1].wallet, accounts[1].address)}>Generate key for {accounts[1].address}</Button>
-              </div>
-            </Accordion.Body>
-          </Accordion.Item>
-
-          <Accordion.Item eventKey="4">
-            <Accordion.Header>Publish key for account: {accounts[1].address}</Accordion.Header>
-            <Accordion.Body>
-              <div className='container'>
-                This will publish the locally available key for the account {accounts[1].address} to the selected blockchain(ARBITRUM).
-              </div>
-              <div className='container mt-2'>
-                <Button onClick={() => publishKey(accounts[1].wallet, accounts[1].address)}>Publish key for {accounts[1].address}</Button>
-              </div>
-            </Accordion.Body>
-          </Accordion.Item>
-
-          <Accordion.Item eventKey="5">
-            <Accordion.Header>Create a room with Creattor Account: {accounts[0].address}</Accordion.Header>
-            <Accordion.Body>
-              <div className='container'>
-                This will create a new private whispering room (Name hardcoded to WhisperingRoom01) with owner account address: {accounts[0].address}. This owner is responsible for managing the state of the room and will be able to send messages to the room recipients. <br />
-                For now, the following recipients have been hardcoded below, but the room creator should be able to specify a list of addresses while creating the room.
-                <ul>
-                  <li>
-                    <span>0x9A9B3fBb7c83D82E7cF696d6F2ecCa35Ba00C356</span>
-                  </li>
-                  <li>
-                    <span>0x1A2F3477E23B1Aa8345697ae6Fa376025ceaf3Ca</span>
-                  </li>
-                </ul>
-              </div>
-              <div className='container mt-2'>
-                <Button onClick={() => createRoom("WhisperingRoom01", accounts[0].address, ["0x9A9B3fBb7c83D82E7cF696d6F2ecCa35Ba00C356", "0x1A2F3477E23B1Aa8345697ae6Fa376025ceaf3Ca", PLATFORM_ADDRESS])}>Create Room with creator: {accounts[0].address}</Button>
-              </div>
-            </Accordion.Body>
-          </Accordion.Item>
-
-          <Accordion.Item eventKey="6">
-            <Accordion.Header>See all rooms for address: 0x9A9B3fBb7c83D82E7cF696d6F2ecCa35Ba00C356</Accordion.Header>
-            <Accordion.Body>
-              <div className='container'>
-                This will list down all the rooms that the given user is a part of. We read all messages sent to this address
-                and see the message where subject starts with [ROOM CREATED]. <br />
-                Note: Make sure this address has been registered with Ylide and all data is available in the app state for this user 0x9A9B3fBb7c83D82E7cF696d6F2ecCa35Ba00C356
-              </div>
-              <div className='container mt-2'>
-                <Button onClick={() => GetMyRooms("0x9a9b3fbb7c83d82e7cf696d6f2ecca35ba00c356")}>Get all rooms for: 0x9A9B3fBb7c83D82E7cF696d6F2ecCa35Ba00C356</Button>
-              </div>
-            </Accordion.Body>
-          </Accordion.Item>
-
-          <Accordion.Item eventKey="7">
-            <Accordion.Header>Show all room details for room: WhisperingRoom01 by creator</Accordion.Header>
-            <Accordion.Body>
-              <div className='container'>
-                This will show up all the room details of the room created by the user in the previous steps
-              </div>
-              <div className='container mt-2'>
-                <Button onClick={() => GetCreatorRoomByName("WhisperingRoom01", accounts[0].address)}>Get Creator({accounts[0].address}) Room(WhisperingRoom01) Details (See Console for Details)</Button>
-              </div>
-            </Accordion.Body>
-          </Accordion.Item>
-
-          <Accordion.Item eventKey="8">
-            <Accordion.Header>Create Post for all members of the room: WhisperingRoom01</Accordion.Header>
-            <Accordion.Body>
-              <div className='container'>
-                This will send a message to all recipients of the room that the creator has created in the previous step.
-              </div>
-              <div className='container mt-2'>
-                <Button onClick={() => CreatePost("WhisperingRoom01", "Random Post01", "Random Post Body01", accounts[0].address)}>Create Post for Room: WhisperingRoom01 created by {accounts[0].address}</Button>
-              </div>
-            </Accordion.Body>
-          </Accordion.Item>
-
-          <Accordion.Item eventKey="9">
-            <Accordion.Header>Read Posts from: WhisperingRoom01, for user: 0x9a9b3fbb7c83d82e7cf696d6f2ecca35ba00c356</Accordion.Header>
-            <Accordion.Body>
-              <div className='container'>
-                This will read all messages sent to the address: 0x9a9b3fbb7c83d82e7cf696d6f2ecca35ba00c356
-              </div>
-              <div className='container mt-2'>
-                <Button onClick={() => ReadPostMessages("0x9a9b3fbb7c83d82e7cf696d6f2ecca35ba00c356", "WhisperingRoom01")}>Read All Posts for user: 0x9a9b3fbb7c83d82e7cf696d6f2ecca35ba00c356</Button>
-              </div>
-            </Accordion.Body>
-          </Accordion.Item>
-
-        </Accordion>
-
-      </header> */}
+            <Form.Group className="mb-3" controlId="txtPostBody">
+              <Form.Label>Post Body</Form.Label>
+              <Form.Control type="textarea" placeholder="Enter Post Data for your Secret Post" />
+            </Form.Group>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="primary" onClick={() => submitCreatePostModal()}>Submit</Button>
+            <Button variant="secondary" onClick={handleCreatePostModalClose}>
+              Close
+            </Button>
+          </Modal.Footer>
+        </Form>
+      </Modal>
     </div >
   );
 }
