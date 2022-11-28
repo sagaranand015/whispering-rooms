@@ -25,6 +25,9 @@ The Whispering Rooms Platform allows for the following functionalities:
 5. *Send Messages to a Room*: [Admin only Action] Since the platform supports only unidirectional messaging, the creator of the room can send encrypyed/private messages to all recipients of the room, which are then decoded on the receiver's end. 
 
 ### Live Demo
+https://whispering-rooms.netlify.app/
 
 ### Demo Video
+https://youtu.be/_HxloYRXElI
+(Navigate to 1:45 for the demo start)
 
