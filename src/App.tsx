@@ -783,7 +783,7 @@ function App() {
     }});
     console.log('message models:', messages)
     setSelectedRoomMsgs(messages);
-    //handleRoomMsgsModalShow();
+    handleRoomMsgsModalShow();
   }
 
   // async function CreatePostMessageForRoom(selectedRoom: string | null) {
@@ -1037,37 +1037,30 @@ function App() {
         </Form>
       </Modal>
 
-      {/* <Modal
+      <Modal
         show={roomMsgsModal}
         onHide={handleRoomMsgsModalClose}
         keyboard={false}
         size='lg'
       >
         <Modal.Header closeButton>
-          <Modal.Title>Showing Posts for {selectedRoomMsgs?.roomName}</Modal.Title>
+          <Modal.Title>Showing Posts for {selectedRoom}</Modal.Title>
         </Modal.Header>
-        <Form>
-          <Modal.Body>
-            {selectedRoomMsgs?.posts?.map(p => (
-              <Alert variant="success">
-                <Alert.Heading>{p.sub}</Alert.Heading>
-                <p>
-                  {p.msg.post}
-                </p>
-                <hr />
-                {/* <p className="mb-0">
-                  Message Sent Privately to you! Make sure no one looks at your screen!
-                </p>
-              </Alert>
-            ))}
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={handleRoomMsgsModalClose}>
-              Close
-            </Button>
-          </Modal.Footer>
-        </Form>
-      </Modal> */}
+
+        <div style={{ position: "relative", height: "500px" }}>
+          <MainContainer>
+            <ChatContainer>
+              <MessageList>
+                {selectedRoomMsgs && selectedRoomMsgs.map(message => (
+                  <Message model={message} />
+                ))}
+              </MessageList>
+              <MessageInput attachButton={false} placeholder="Type message here" onSend={handleSendMessage} disabled={!selectedRoom} />
+            </ChatContainer>
+          </MainContainer>
+        </div>
+
+      </Modal>
 
       {/* <Modal
         show={createPostModal}
@@ -1100,18 +1093,6 @@ function App() {
         </Form>
       </Modal> */}
 
-      <div style={{ position: "relative", height: "500px" }}>
-        <MainContainer>
-          <ChatContainer>
-            <MessageList>
-              {selectedRoomMsgs && selectedRoomMsgs.map(message => (
-                <Message model={message} />
-              ))}
-            </MessageList>
-            <MessageInput attachButton={false} placeholder="Type message here" onSend={handleSendMessage} disabled={!selectedRoom} />
-          </ChatContainer>
-        </MainContainer>
-      </div>
     </div >
   );
 }
