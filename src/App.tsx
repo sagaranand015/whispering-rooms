@@ -574,8 +574,8 @@ function App() {
         message: postBody,
         sentTime: "just now",
         sender: fromAcc.address,
-        direction: "incoming",
-        position: "last",
+        direction: "outgoing",
+        position: "normal",
       }
     ])
   }
@@ -625,7 +625,8 @@ function App() {
           if (msg['room'] == roomName) {
             allMsgs.push({
               'msg': msg,
-              'sub': sub
+              'sub': sub,
+              'sender': message.senderAddress,
             });
           }
 
@@ -780,9 +781,9 @@ function App() {
     const messages: MessageModel[] = gotMsgs.map(message => { return {
       message: message.msg.post,
       sentTime: "just now",
-      sender: message.sub,
-      direction: "incoming",
-      position: "last",
+      sender: message.sender,
+      direction: message.sender.toLowerCase() === currAcc.address.toLowerCase() ? "outgoing" : "incoming",
+      position: "normal",
     }});
     console.log('message models:', messages)
     setSelectedRoomMsgs(messages);
@@ -1111,7 +1112,7 @@ function App() {
                 <Message model={message} />
               ))}
             </MessageList>
-            <MessageInput attachButton={false} placeholder="Type message here" onSend={handleSendMessage} />
+            <MessageInput attachButton={false} placeholder="Type message here" onSend={handleSendMessage} disabled={!selectedRoom} />
           </ChatContainer>
         </MainContainer>
       </div>
