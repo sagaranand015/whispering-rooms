@@ -705,6 +705,19 @@ function App() {
     await publishKey(currAcc.wallet, currAcc.address);
   }
 
+  async function SeeRoomMessages(selectedRoom: string | null) {
+    if (!currAcc) {
+      alert("Please connect your wallet to be able to generate Communication Keys");
+      return;
+    }
+    if (!selectedRoom) {
+      alert("No Room selected!");
+      return;
+    }
+    const gotMsgs = await ReadPostMessages(currAcc.address, selectedRoom);
+    console.log("========== all posts data is: ", gotMsgs);
+  }
+
   return (
     <div className="App">
 
@@ -783,12 +796,12 @@ function App() {
                 <div className="button-container mr-auto ml-auto mb-2 justify-content-right align-items-right">
                   <Button
                     className="btn-simple btn-icon"
-                    href="#pablo"
-                    onClick={(e) => e.preventDefault()}
+                    href="#"
+                    onClick={() => SeeRoomMessages(r.roomName)}
                     size='sm'
                     variant="primary"
                   >
-                    Enter Room
+                    Show My Messages
                   </Button>
                 </div>
               </Card>
