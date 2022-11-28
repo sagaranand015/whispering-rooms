@@ -29,6 +29,8 @@ Ylide.registerWalletFactory(ethereumWalletFactory);
 
 function App() {
 
+  document.title = "Whispering Rooms - Send Private Secure Messages cross chain";
+
   /*
   [START] STATE VARIABLES FOR STORING ACCOUNTS, WALLETS AND ALL ASSOICATED DATA
    */
@@ -300,7 +302,7 @@ function App() {
         wallet: factory.wallet,
         address: newAcc.address,
       });
-      alert(`Account: ${newAcc.address} is already authenticated and registered in the app state`);
+      // alert(`Account: ${newAcc.address} is already authenticated and registered in the app state`);
       return;
     }
     setAccounts(
@@ -315,7 +317,7 @@ function App() {
       wallet: factory.wallet,
       address: newAcc.address,
     });
-    alert(`Account: ${newAcc.address} has been authenticated and added to the app state. ${currAcc?.address}`);
+    // alert(`Account: ${newAcc.address} has been authenticated and added to the app state. ${currAcc?.address}`);
   }
 
   async function getAddedAccounts() {
@@ -367,7 +369,7 @@ function App() {
         );
       } else {
         console.log("======== localKey?.publicKey not there!");
-        alert("Please generate the key and reload the page to get the local public key in state!");
+        // alert("Please generate the key and reload the page to get the local public key in state!");
       }
 
     },
@@ -407,7 +409,7 @@ function App() {
       },
       { network: EVMNetwork.ARBITRUM }
     );
-    alert(`Room Created with MessageId: ${msgId}`);
+    // alert(`Room Created with MessageId: ${msgId}`);
     console.log(`Room Created with MessageId: ${msgId}`);
   }
 
@@ -415,7 +417,7 @@ function App() {
     const r = readers[0];
     const account = accountsState[addr];
     if (!r || !account) {
-      alert("Please reload the page to make sure readers and accounts have been initialized");
+      // alert("Please reload the page to make sure readers and accounts have been initialized");
       return;
     }
     const a = r.addressToUint256(addr);
@@ -450,7 +452,7 @@ function App() {
         }
       } else {
         console.log("========= no public key!");
-        alert("make sure generate and publish functions have been called and app state is initialized");
+        // alert("make sure generate and publish functions have been called and app state is initialized");
       }
     }
     setCurrRooms(roomsArr);
@@ -504,7 +506,7 @@ function App() {
         }
       } else {
         console.log("========= no public key!");
-        alert("make sure generate and publish functions have been called and app state is initialized");
+        // alert("make sure generate and publish functions have been called and app state is initialized");
       }
     }
   }
@@ -621,7 +623,7 @@ function App() {
         }
       } else {
         console.log("========= no public key!");
-        alert("make sure generate and publish functions have been called and app state is initialized");
+        // alert("make sure generate and publish functions have been called and app state is initialized");
       }
     }
     return allMsgs;
