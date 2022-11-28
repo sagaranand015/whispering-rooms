@@ -575,7 +575,7 @@ function App() {
         sentTime: "just now",
         sender: fromAcc.address,
         direction: "outgoing",
-        position: "normal",
+        position: "last",
       }
     ])
   }
@@ -626,6 +626,7 @@ function App() {
               'msg': msg,
               'sub': sub,
               'sender': message.senderAddress,
+              'sentTime': message.createdAt,
             });
           }
         }
@@ -776,15 +777,17 @@ function App() {
     setSelectedRoom(selectedRoom);
 
     if (!gotMsgs) return;
-    const messages: MessageModel[] = gotMsgs.map(message => {
-      return {
-        message: message.msg.post,
-        sentTime: "just now",
-        sender: message.sender,
-        direction: message.sender.toLowerCase() === currAcc.address.toLowerCase() ? "outgoing" : "incoming",
-        position: "normal",
-      }
-    });
+    const messages: MessageModel[] = gotMsgs
+      .sort(message => message.sentTime).reverse()
+      .map(message => {
+        return {
+          message: message.msg.post,
+          sentTime: message.sentTime.toLocaleString(),
+          sender: message.sender,
+          direction: message.sender.toLowerCase() === currAcc.address.toLowerCase() ? "outgoing" : "incoming",
+          position: "normal",
+        }
+      });
     console.log('message models:', messages)
     setSelectedRoomMsgs(messages);
     handleRoomMsgsModalShow();
