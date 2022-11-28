@@ -851,25 +851,56 @@ function App() {
                 <h6 className="section-subtitle text-muted">One Stop Platform for making sure your conversations always stay private, and only accessible to you!</h6>
               </div>
               <div className="d-md-flex justify-content-between">
-                <div className="grid-margin d-flex justify-content-start">
+                <div className="col-md-4">
                   <div className="features-width">
                     <img src="images/Group12.svg" alt="" className="img-icons" />
                     <h5 className="py-3">Web3<br />First</h5>
                     <p className="text-muted">We use the power of cryptography to make encrypt all communications on blockchain</p>
                   </div>
                 </div>
-                <div className="grid-margin d-flex justify-content-center">
+                <div className="col-md-4">
                   <div className="features-width">
                     <img src="images/Group7.svg" alt="" className="img-icons" />
                     <h5 className="py-3">Cross-Chain<br />Platform</h5>
                     <p className="text-muted">Whispering Rooms can be created cross-chain, without limiting the power of secure communications to a single ecosystem</p>
                   </div>
                 </div>
-                <div className="grid-margin d-flex justify-content-end">
+                <div className="col-md-4">
                   <div className="features-width">
                     <img src="images/Group5.svg" alt="" className="img-icons" />
                     <h5 className="py-3">Whisper<br />Loudly</h5>
                     <p className="text-muted">Just keep your wallet and Comms Private Key to yourself, no one will be able to see your communications by any means!</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <br />
+            <br />
+            <section className="features-overview" id="features-section" >
+              <div className="content-header">
+                <h2>Connect with us!</h2>
+                <h6 className="section-subtitle text-muted">Not sure on how to use Whispering Room? Connect with us</h6>
+              </div>
+              <div className="d-md-flex justify-content-between">
+                <div className="col-md-6">
+                  <div className="features-width">
+                    <img src="images/Group12.svg" alt="" className="img-icons" />
+                    <h5 className="py-3">
+                      <a href='https://twitter.com/sagaranand015'>
+                        Reach us on Twitter
+                      </a>
+                    </h5>
+                  </div>
+                </div>
+                <div className="col-md-6">
+                  <div className="features-width">
+                    <img src="images/Group7.svg" alt="" className="img-icons" />
+                    <h5 className="py-3">
+                      <a href='mailto:sagar.anand@live.in'>
+                        Mail us
+                      </a>
+                    </h5>
                   </div>
                 </div>
               </div>
