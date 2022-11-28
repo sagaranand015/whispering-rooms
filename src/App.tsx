@@ -9,8 +9,11 @@ import {
   everscaleWalletFactory,
   uint256ToAddress,
 } from "@ylide/everscale";
-import { Accordion, Button } from 'react-bootstrap';
+import { Accordion, Button, Card, CardGroup, Col, Row } from 'react-bootstrap';
 import { PLATFORM_ADDRESS } from './constants';
+
+import { Navbar, Container, Nav, Dropdown } from "react-bootstrap";
+import CardHeader from 'react-bootstrap/esm/CardHeader';
 
 // Ylide.registerBlockchainFactory(evmFactories[EVMNetwork.POLYGON]);
 // Ylide.registerBlockchainFactory(evmFactories[EVMNetwork.ETHEREUM]);
@@ -47,6 +50,22 @@ function App() {
       ? JSON.parse(localStorage.getItem("accs")!)
       : []
   );
+  const [currAcc, setCurrAcc] = useState<
+    { wallet: string; address: string }
+  >();
+  const [currAccState, setCurrAccState] = useState<
+    Record<
+      string,
+      {
+        localKey: YlideKeyPair | null;
+        remoteKey: Uint8Array | null;
+        wallet: {
+          wallet: AbstractWalletController;
+          factory: WalletControllerFactory;
+        } | null;
+      }
+    >
+  >({});
   const [accountsState, setAccountsState] = useState<
     Record<
       string,
@@ -78,7 +97,7 @@ function App() {
   // useEffect to set accounts
   useEffect(() => {
     localStorage.setItem("accs", JSON.stringify(accounts));
-  }, [accounts]);
+  }, [accounts, currAcc]);
 
   // useEffect to set all available wallets and adding those to ylide sdk
   useEffect(() => {
@@ -177,7 +196,7 @@ function App() {
       console.log("========= setting account state: ", result);
       setAccountsState(result);
     })();
-  }, [accounts, keys, readers, wallets]);
+  }, [accounts, keys, readers, wallets, currAcc]);
 
   const handlePasswordRequest = useCallback(async (reason: string) => {
     return prompt(`Enter Ylide password for ${reason}`);
@@ -270,6 +289,10 @@ function App() {
     }
     const exists = accounts.some((a) => a.address === newAcc.address);
     if (exists) {
+      setCurrAcc({
+        wallet: factory.wallet,
+        address: newAcc.address,
+      });
       alert(`Account: ${newAcc.address} is already authenticated and registered in the app state`);
       return;
     }
@@ -281,7 +304,11 @@ function App() {
         },
       ])
     );
-    alert(`Account: ${newAcc.address} has been authenticated and added to the app state`);
+    setCurrAcc({
+      wallet: factory.wallet,
+      address: newAcc.address,
+    });
+    alert(`Account: ${newAcc.address} has been authenticated and added to the app state. ${currAcc?.address}`);
   }
 
   async function getAddedAccounts() {
@@ -339,86 +366,6 @@ function App() {
     },
     [accountsState]
   );
-
-  // const sendMessage = useCallback(async (fromAcc: string, toAcc: string, subject: string, textBody: string) => {
-  //   if (!ylide) {
-  //     console.log("======= 1!")
-  //     return;
-  //   }
-  //   // const fromAccount = accounts.find((a) => a.address === from);
-  //   if (!fromAcc) {
-  //     console.log("======= 2!")
-  //     return;
-  //   }
-  //   const state = accountsState[fromAcc];
-  //   if (!state) {
-  //     console.log("======= 3!")
-  //     return;
-  //   }
-  //   const content = MessageContentV3.plain(subject, textBody);
-  //   const msgId = await ylide.sendMessage(
-  //     {
-  //       wallet: state.wallet!.wallet,
-  //       sender: (await state.wallet!.wallet.getAuthenticatedAccount())!,
-  //       content,
-  //       recipients: [toAcc],
-  //     },
-  //     { network: EVMNetwork.ARBITRUM }
-  //   );
-  //   alert(`Sent ${msgId}`);
-  //   console.log("======== message has been sent", msgId);
-  // }, [accounts, accountsState, ylide]);
-
-  // async function ReadMessage(addr: string) {
-  //   console.log("======= all readers are: ", readers);
-  //   const r = readers[0];
-  //   console.log("========= reader is: ", r);
-  //   const account = accountsState[addr];
-
-  //   // var msgList = new MessagesList();
-  //   // const msgList = useMemo(() => new MessagesList(), []);
-  //   // msgList.
-
-  //   var addrUnit256 = account.wallet?.wallet.addressToUint256(addr) || null;
-  //   console.log("======== account (addrUnit256) is: ", addrUnit256);
-  //   console.log("======== account is: ", account);
-  //   // const m = r.retrieveMessageHistoryByTime
-  //   const a = r.addressToUint256(addr);
-  //   // const messages = await r.retrieveMessageHistoryByBounds(addr, a).then(function (resp) {
-  //   //   console.log("========= messages are[1]: ", resp);
-  //   // });
-  //   const messages = await r.retrieveMessageHistoryByBounds(addr, a);
-  //   console.log("========= messages are[2]: ", messages);
-  //   // await r.retrieveBroadcastHistoryByBounds(addrUnit256).then(function (resp) {
-  //   //   console.log("========= messages are: ", resp);
-  //   // });
-
-
-  //   const message = messages[1];
-  //   const content = await r.retrieveAndVerifyMessageContent(message);
-  //   if (!content || content.corrupted) { // check content integrity
-  //     throw new Error('Content not found or corrupted');
-  //   }
-  //   console.log("content is: ", content);
-
-  //   console.log("======== keystore keys are: ", keystore.get(message.recipientAddress));
-
-  //   const pubKey = account.localKey?.publicKey;
-  //   if (pubKey) {
-  //     const decodedContent = await ylide?.decryptMessageContent(
-  //       {
-  //         address: addr || "",
-  //         blockchain: "evm",
-  //         publicKey: PublicKey.fromPackedBytes(pubKey),
-  //       }, // recipient account
-  //       message, // message header
-  //       content, // message content
-  //     );
-  //     console.log("======== decoded content is: ", decodedContent);
-  //   } else {
-  //     console.log("========= no public key!");
-  //   }
-  // }
 
   async function createRoom(roomName: string, creatorAddr: string, recipientAccounts: string[]) {
     if (!ylide) {
@@ -661,45 +608,114 @@ function App() {
     }
   }
 
+  async function isCurrAccountOnboarded() {
+    const result: Record<
+      string,
+      {
+        wallet: {
+          wallet: AbstractWalletController;
+          factory: WalletControllerFactory;
+        } | null;
+        localKey: YlideKeyPair | null;
+        remoteKey: Uint8Array | null;
+      }
+    > = {};
+    if (currAcc) {
+      const wallet = wallets.find(
+        (w) => w.factory.wallet === currAcc.wallet
+      );
+      result[currAcc.address] = {
+        wallet: wallet || null,
+        localKey:
+          keys.find((k) => k.address === currAcc.address)?.keypair ||
+          null,
+        remoteKey:
+          (
+            await Promise.all(
+              readers.map(async (r) => {
+                if (!r.isAddressValid(currAcc.address)) {
+                  return null;
+                }
+                const c =
+                  await r.extractPublicKeyFromAddress(
+                    currAcc.address
+                  );
+                if (c) {
+                  console.log(
+                    `NEW found public key for ${currAcc.address} in `,
+                    r
+                  );
+                  return c.bytes;
+                } else {
+                  return null;
+                }
+              })
+            )
+          ).find((t) => !!t) || null,
+      };
+      setCurrAccState(result);
+      return true;
+    }
+    return false;
+  }
+
   return (
     <div className="App">
-      <header className="App-header">
-        {/* <button onClick={seeWalletList}>See Wallet List</button>
-        <button onClick={() => addAccount(walletsList[0].factory)}>Add Metamask Account</button>
-        <button onClick={getAddedAccounts}>See Added Accounts</button>
-        <button onClick={() => generateKey(accounts[0].wallet, "0x9a9b3fbb7c83d82e7cf696d6f2ecca35ba00c356")}>Generate Key for 1st account</button>
-        <button onClick={() => publishKey(accounts[0].wallet, "0x9a9b3fbb7c83d82e7cf696d6f2ecca35ba00c356")}>Publish Key for 1st account</button>
-        <button onClick={() => sendMessage("0x0a055ed28e6acc2f2377ed0ae3be06d24885d449", "0x9a9b3fbb7c83d82e7cf696d6f2ecca35ba00c356", "Hello World from my app", "Body of the hello world demo message from DevAccount03 To ProdAccount")}>Send Message from 449 to 356</button>
-        <button onClick={() => ReadMessage("0x9a9b3fbb7c83d82e7cf696d6f2ecca35ba00c356")}>Read Message Metadata for 356</button> */}
-        {/* <button onClick={checkIfWalletAvailable}>Check Wallet Available</button>
-        <button onClick={GetWalletList}>See Wallet List</button>
-        <button onClick={initializeKeyStore}>Initialize Keystore</button> */}
 
-        {/* <Button onClick={seeWalletList} variant='success'>See All Wallets</Button> */}
+      <Navbar bg="light" expand="lg">
+        <Container fluid>
+          <div className="d-flex justify-content-center align-items-center ml-2 ml-lg-0">
+            <Button
+              variant="dark"
+              className="d-lg-none btn-fill d-flex justify-content-center align-items-center rounded-circle p-2"
+            >
+              <i className="fas fa-ellipsis-v"></i>
+            </Button>
+            <Navbar.Brand
+              href="#home"
+              className="mr-2"
+            >
+              Whispering Rooms
+            </Navbar.Brand>
+          </div>
+          <Navbar.Toggle aria-controls="basic-navbar-nav" className="mr-2">
+            <span className="navbar-toggler-bar burger-lines"></span>
+            <span className="navbar-toggler-bar burger-lines"></span>
+            <span className="navbar-toggler-bar burger-lines"></span>
+          </Navbar.Toggle>
+          {currAcc ? <Button variant='success'>Wallet Connected</Button> : <Button onClick={() => addAccount(walletsList[0].factory)}>Connect Wallet</Button>}
+        </Container>
+      </Navbar>
 
+      {
+        currAcc ?
+          <Container fluid>
+            <Card>
+              <Card.Body>
+                <Card.Title>Connected Address</Card.Title>
+                <Card.Subtitle className="mb-2 text-muted">{currAcc.address}</Card.Subtitle>
+              </Card.Body>
+            </Card>
+            <Row className='mt-2'>
+              <Navbar bg="light" expand="lg">
+                <Container fluid>
+                  <div className="d-flex justify-content-center align-items-center ml-2 ml-lg-0">
+                    <Button variant='primary' onClick={() => GetMyRooms(currAcc?.address)}>My Private Rooms</Button>
+                  </div>
+                  <div className='d-flex justify-content-right align-items-right ml-2 ml-lg-0'>
+                    <Button variant='danger' onClick={() => GetMyRooms(currAcc?.address)}>Create a Private Room</Button>
+                  </div>
+                </Container>
+              </Navbar>
+            </Row>
+          </Container>
+          :
+          "Nothing to see here!"
+      }
+
+      {/* <header className="App-header">
         <Accordion defaultActiveKey="0" className='container'>
-          <Accordion.Item eventKey="0">
-            <Accordion.Header>See All Connected Wallets</Accordion.Header>
-            <Accordion.Body>
-              <div className='container'>
-                This will show the list of connected wallets within your browser. See the browser console to see all wallets in this window
-              </div>
-              <div className='container mt-2'>
-                <Button onClick={seeWalletList}>See Wallet List in Console</Button>
-              </div>
-            </Accordion.Body>
-          </Accordion.Item>
-          <Accordion.Item eventKey="1">
-            <Accordion.Header>Add Connected Account to app state</Accordion.Header>
-            <Accordion.Body>
-              <div className='container'>
-                This will add the currently selected account in your wallet(eg. Metamask) to the app state and also register this account with the Ylide SDK on the selected blockchain (ARBITRUM in this case)
-              </div>
-              <div className='container mt-2'>
-                <Button onClick={() => addAccount(walletsList[0].factory)}>Add Account to Ylide and AppState</Button>
-              </div>
-            </Accordion.Body>
-          </Accordion.Item>
+
           <Accordion.Item eventKey="2">
             <Accordion.Header>See all Connected Accounts</Accordion.Header>
             <Accordion.Body>
@@ -809,8 +825,8 @@ function App() {
 
         </Accordion>
 
-      </header>
-    </div>
+      </header> */}
+    </div >
   );
 }
 
