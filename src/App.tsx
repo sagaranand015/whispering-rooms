@@ -620,11 +620,15 @@ function App() {
           console.log(`got a post with subject: ${decodedContent.subject.split(":")[1]} with data: ${decodedContent.content}. and room: ${roomName}`);
           const sub = decodedContent.subject.split(":")[1];
           const msg = JSON.parse(decodedContent.content);
-          console.log(`Post subject: ${sub}, body: ${msg["post"]}`);
-          allMsgs.push({
-            'msg': msg,
-            'sub': sub
-          });
+          console.log(`Post subject: ${sub}, body: ${msg}, room: ${msg['room']}`);
+          console.log(msg);
+          if (msg['room'] == roomName) {
+            allMsgs.push({
+              'msg': msg,
+              'sub': sub
+            });
+          }
+
         }
       } else {
         console.log("========= no public key!");
