@@ -1,46 +1,30 @@
-# Getting Started with Create React App
+### Whispering Rooms
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Whispering Rooms is one of kind blockchain based platform that allows for secure and private unidirectional communication among web3 entities. The main idea behind Whispering Rooms is to enable a medium for the most private of communications, without worrying about third parties eavesdropping on any communication. 
+Whispering Rooms can be used in a variety of ways, a few enumerated below:
+1. Targeted Rooms for whistleblowers with a defined audience. 
+2. FoolProof encrypted private communication platform for defined audience. 
+3. Web3 based encrypted and anonymous communication between multiple parties. 
+and so on...
 
-## Available Scripts
+### Cross Chain Architecture
 
-In the project directory, you can run:
+The Whispering Rooms platform makes use of the Ylide SDK for messaging, giving the entire platform a flair of cross-chain capabilities and allowing for support across multiple ecosystems. The platform's architecture is extremely simple with its Ylide SDK Integration and so it also keeps the cost of using the platform on any chain extremely low (10 cents for a message). 
+To read more about Ylide, please refer (https://docs.ylide.io/parts-of-the-ylide)[HERE]
 
-### `npm start`
+### Platform Usage
+The Whispering Rooms Platform allows for the following functionalities:
+1. *Generating and Registering the Communication Keys*: As Ylide SDK requires a KeyPair to work with message encryption and decryption, the platform takes care of exposing this functionality for the end users. First time users can generate and register their communication keys with Ylide and start sending secure communications. 
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+2. *Creating a private Room*: The platform allows creating a private room with a set of recipient addresses by any user. This room can then be used to send unidirectional information from the creator to the list of recipient addresses defined during the room creation. Both the creation of the room and the sending messages to the room recipients is encrypted and secure in every way. 
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+3. *Seeing My Room list*: The platform shows a list of private rooms that a user is part of, once the onboarding has been completed. 
 
-### `npm test`
+4. *See Messages of My Rooms*: The platform shows a list of messages received in a room, given that the user is present in the room recipient list. The messages are decoded and decrypted using the user's communication keys, so the messages are only visible if the onboarded user is present in the room recipient list. 
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+5. *Send Messages to a Room*: [Admin only Action] Since the platform supports only unidirectional messaging, the creator of the room can send encrypyed/private messages to all recipients of the room, which are then decoded on the receiver's end. 
 
-### `npm run build`
+### Live Demo
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Demo Video
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
