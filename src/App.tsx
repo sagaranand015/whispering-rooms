@@ -9,7 +9,7 @@ import {
   everscaleWalletFactory,
   uint256ToAddress,
 } from "@ylide/everscale";
-import { Accordion, Button, Card, CardGroup, Col, Row } from 'react-bootstrap';
+import { Accordion, Button, Card, CardGroup, Col, Form, Modal, Row } from 'react-bootstrap';
 import { PLATFORM_ADDRESS } from './constants';
 
 import { Navbar, Container, Nav, Dropdown } from "react-bootstrap";
@@ -347,7 +347,7 @@ function App() {
     await k.storeUnencrypted(password);
     // Save the key in the storage again
     await keystore.save();
-    document.location.reload();
+    // document.location.reload();
     // alert(`done generating key locally for address: ${address}`);
   }
 
@@ -563,6 +563,7 @@ function App() {
   async function ReadPostMessages(addr: string, roomName: string) {
     const r = readers[0];
     const account = accountsState[addr];
+    const allMsgs = []
 
     if (!r || !account) {
       alert("Please reload the page to make sure readers and accounts have been initialized");
@@ -570,11 +571,7 @@ function App() {
     }
 
     var addrUnit256 = account.wallet?.wallet.addressToUint256(addr) || null;
-    // console.log("======== account (addrUnit256) is: ", addrUnit256);
-    // console.log("======== account is: ", account);
     const a = r.addressToUint256(addr);
-    console.log("======== account (addrUnit256) is: ", a);
-
     const messages = await r.retrieveMessageHistoryByBounds(addr, a);
     console.log("========= all messages are: ", messages);
 
@@ -604,12 +601,17 @@ function App() {
           const sub = decodedContent.subject.split(":")[1];
           const msg = JSON.parse(decodedContent.content);
           console.log(`Post subject: ${sub}, body: ${msg["post"]}`);
+          allMsgs.push({
+            'msg': msg,
+            'sub': sub
+          });
         }
       } else {
         console.log("========= no public key!");
         alert("make sure generate and publish functions have been called and app state is initialized");
       }
     }
+    return allMsgs;
   }
 
   async function isCurrAccountOnboarded() {
@@ -663,6 +665,46 @@ function App() {
     return false;
   }
 
+  const [createRoomModal, setCreateRoomModal] = useState(false);
+  const handleCreateRoomClose = () => setCreateRoomModal(false);
+  const handleCreateRoomShow = () => setCreateRoomModal(true);
+
+  const [onboardModal, setOnboardModal] = useState(false);
+  const handleOnboardModalClose = () => setOnboardModal(false);
+  const handleOnboardModalShow = () => setOnboardModal(true);
+
+  async function submitCreateRoomForm() {
+    const rNameText = (document.getElementById('txtRoomName') as HTMLInputElement).value;
+    const rRepsText = (document.getElementById('txtRoomReps') as HTMLInputElement).value;
+    const allResp = rRepsText.split(',');
+    allResp.push(PLATFORM_ADDRESS);
+    if (currAcc) {
+      allResp.push(currAcc.address);
+      console.log("======= all data in array: ", allResp);
+      await createRoom(rNameText, currAcc?.address, allResp);
+      alert("Room Created Successfully!");
+      handleCreateRoomClose();
+    } else {
+      alert("Account not connected.. please connect account");
+    }
+  }
+
+  async function submitGenerateKey() {
+    if (!currAcc) {
+      alert("Please connect your wallet to be able to generate Communication Keys");
+      return;
+    }
+    await generateKey(currAcc.wallet, currAcc.address);
+  }
+
+  async function submitRegisterKey() {
+    if (!currAcc) {
+      alert("Please connect your wallet to be able to generate Communication Keys");
+      return;
+    }
+    await publishKey(currAcc.wallet, currAcc.address);
+  }
+
   return (
     <div className="App">
 
@@ -687,7 +729,9 @@ function App() {
             <span className="navbar-toggler-bar burger-lines"></span>
             <span className="navbar-toggler-bar burger-lines"></span>
           </Navbar.Toggle>
+          {currAcc ? <Button variant='primary' onClick={handleOnboardModalShow}>Onboard Account</Button> : ""}
           {currAcc ? <Button variant='success'>Wallet Connected</Button> : <Button onClick={() => addAccount(walletsList[0].factory)}>Connect Wallet</Button>}
+
         </Container>
       </Navbar>
 
@@ -707,7 +751,7 @@ function App() {
                     <Button variant='primary' onClick={() => GetMyRooms(currAcc?.address)}>My Private Rooms</Button>
                   </div>
                   <div className='d-flex justify-content-right align-items-right ml-2 ml-lg-0'>
-                    <Button variant='danger' onClick={() => GetMyRooms(currAcc?.address)}>Create a Private Room</Button>
+                    <Button variant='danger' onClick={handleCreateRoomShow}>Create a Private Room</Button>
                   </div>
                 </Container>
               </Navbar>
@@ -718,37 +762,96 @@ function App() {
       }
 
       {currAcc && currRooms.length > 0 ? <Container fluid>
-        <CardGroup>
+        <Row xs={1} md={2} lg={4} className="g-4">
           {currRooms.map(r => (
-            <Card>
-              <div className="card-image">
-                <img
-                  alt="Room Placeholder Image"
-                  src='https://via.placeholder.com/600x200.png'
-                ></img>
-              </div>
-              <Card.Body>
-                <Card.Title>{r.roomName}</Card.Title>
-                <Card.Text>
-                  Your Private Room with {r.recipients.length - 2} recipients. This room remains private and only the recipients can see your messages!
-                </Card.Text>
-              </Card.Body>
-              <hr></hr>
-              <div className="button-container mr-auto ml-auto mb-2 justify-content-right align-items-right">
-                <Button
-                  className="btn-simple btn-icon"
-                  href="#pablo"
-                  onClick={(e) => e.preventDefault()}
-                  size='sm'
-                  variant="primary"
-                >
-                  Enter Room
-                </Button>
-              </div>
-            </Card>
+            <Col>
+              <Card>
+                <div className="card-image">
+                  <img
+                    alt="Room Placeholder Image"
+                    src={require('./assets/img/photo-1431578500526-4d9613015464.jpeg')}
+                    width="100%"
+                  ></img>
+                </div>
+                <Card.Body>
+                  <Card.Title>{r.roomName}</Card.Title>
+                  <Card.Text>
+                    Your Private Room with {r.recipients.length - 2} recipients. This room remains private and only the recipients can see your messages!
+                  </Card.Text>
+                </Card.Body>
+                <hr></hr>
+                <div className="button-container mr-auto ml-auto mb-2 justify-content-right align-items-right">
+                  <Button
+                    className="btn-simple btn-icon"
+                    href="#pablo"
+                    onClick={(e) => e.preventDefault()}
+                    size='sm'
+                    variant="primary"
+                  >
+                    Enter Room
+                  </Button>
+                </div>
+              </Card>
+            </Col>
           ))}
-        </CardGroup>
+        </Row>
       </Container> : <Container fluid><h4>Loading Room list... Please wait</h4></Container>}
+
+      <Modal
+        show={createRoomModal}
+        onHide={handleCreateRoomClose}
+        backdrop="static"
+        keyboard={false}
+        size='lg'
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Create a new Private Room</Modal.Title>
+        </Modal.Header>
+        <Form>
+          <Modal.Body>
+            <Form.Group className="mb-3" controlId="txtRoomName">
+              <Form.Label>Email address</Form.Label>
+              <Form.Control type="text" placeholder="Enter Room Name" />
+            </Form.Group>
+
+            <Form.Group className="mb-3" controlId="txtRoomReps">
+              <Form.Label>Recipients List</Form.Label>
+              <Form.Control type="textarea" placeholder="Comma Separated list of all recipient addresses" />
+            </Form.Group>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="primary" onClick={() => submitCreateRoomForm()}>Submit</Button>
+            <Button variant="secondary" onClick={handleCreateRoomClose}>
+              Close
+            </Button>
+          </Modal.Footer>
+        </Form>
+      </Modal>
+
+      <Modal
+        show={onboardModal}
+        onHide={handleOnboardModalClose}
+        keyboard={false}
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Onboard your Connected Wallet Account</Modal.Title>
+        </Modal.Header>
+        <Form>
+          <Modal.Body>
+            Ylide requires the connected wallet address to generate their commuication keys and register these keys via Ylide SDK. <br />
+            For first time users, Whispering Rooms allows for generation and registering these communication keys.
+            Use the following buttons to first generate the keys and registering that key with Ylide.
+            Once done, the user should be able to create private Whispering Rooms and read messages sent to their rooms.
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="primary" onClick={() => submitGenerateKey()}>Generate Key</Button>
+            <Button variant="primary" onClick={() => submitRegisterKey()}>Register Key</Button>
+            <Button variant="secondary" onClick={handleOnboardModalClose}>
+              Close
+            </Button>
+          </Modal.Footer>
+        </Form>
+      </Modal>
 
       {/* <header className="App-header">
         <Accordion defaultActiveKey="0" className='container'>
