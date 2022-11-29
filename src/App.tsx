@@ -843,6 +843,9 @@ function App() {
                 Use our Whispering Rooms to create a private and secure chatting room with other Web3 Users, and send encrypted messages to their addresses! <br />
                 Using the power of blockchain and Ylide, whisper away your private communications without worrying about third parties eavesdropping on your privacy.
               </h6>
+              <h6 className="font-weight-normal text-muted pb-3">
+                Please Use the <b>ARBITRUM NETWORK</b> to conect your wallet and try out <i>Whispering Rooms</i>
+              </h6>
               <div>
                 <Button variant="primary" className="btn btn-opacity-light mr-1" onClick={() => addAccount(walletsList[0].factory)}>Get started</Button>
               </div>
@@ -976,7 +979,7 @@ function App() {
         <Form>
           <Modal.Body>
             <Form.Group className="mb-3" controlId="txtRoomName">
-              <Form.Label>Email address</Form.Label>
+              <Form.Label>Room Name</Form.Label>
               <Form.Control type="text" placeholder="Enter Room Name" />
             </Form.Group>
 
