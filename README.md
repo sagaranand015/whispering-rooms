@@ -1,3 +1,5 @@
+[TESTED ON ARBITRUM, PLEASE USE ARBITRUM AS THE SELECTEE NETWORK FOR ALL OPERATIONS]
+
 ### Whispering Rooms
 
 Whispering Rooms is one of kind blockchain based platform that allows for secure and private unidirectional communication among web3 entities. The main idea behind Whispering Rooms is to enable a medium for the most private of communications, without worrying about third parties eavesdropping on any communication. 
