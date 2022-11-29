@@ -1,21 +1,15 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import logo from './logo.svg';
-import './App.css';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import './assets/css/style.css';
 
 import { evmFactories, ethereumWalletFactory, EVMNetwork, EVM_NAMES } from '@ylide/ethereum';
-import { AbstractBlockchainController, AbstractWalletController, BrowserLocalStorage, MessageContentV3, MessagesList, PublicKey, WalletControllerFactory, Ylide, YlideKeyPair, YlideKeyStore } from '@ylide/sdk';
-import {
-  everscaleBlockchainFactory,
-  everscaleWalletFactory,
-  uint256ToAddress,
-} from "@ylide/everscale";
-import { Accordion, Alert, Button, Card, CardGroup, Col, Form, Modal, Row } from 'react-bootstrap';
-import { PLATFORM_ADDRESS } from './constants';
+import { AbstractBlockchainController, AbstractWalletController, BrowserLocalStorage, MessageContentV3, PublicKey, WalletControllerFactory, Ylide, YlideKeyPair, YlideKeyStore } from '@ylide/sdk';
+import { Alert, Button, Card, Col, Form, Modal, Row } from 'react-bootstrap';
+import { ChatContainer, MainContainer, Message, MessageInput, MessageList, MessageModel } from '@chatscope/chat-ui-kit-react';
 
-import { Navbar, Container, Nav, Dropdown } from "react-bootstrap";
-import CardHeader from 'react-bootstrap/esm/CardHeader';
-import { IntroPage } from './components/IntroPage';
+import "@chatscope/chat-ui-kit-styles/dist/default/styles.min.css";
+import './App.css';
+
+import { Navbar, Container } from "react-bootstrap";
 
 // Ylide.registerBlockchainFactory(evmFactories[EVMNetwork.POLYGON]);
 // Ylide.registerBlockchainFactory(evmFactories[EVMNetwork.ETHEREUM]);
@@ -98,8 +92,8 @@ function App() {
   }, [currRooms]);
 
   /*
-  [START] USE EFFECTS FOR INITIALIZING THE STATE VARIABLES ON APP LOAD. 
-  WE CAN DO THIS ON USER INTERACTION TOO, ITS JUST BETTER TO MAKE SURE WE INITIALIZE 
+  [START] USE EFFECTS FOR INITIALIZING THE STATE VARIABLES ON APP LOAD.
+  WE CAN DO THIS ON USER INTERACTION TOO, ITS JUST BETTER TO MAKE SURE WE INITIALIZE
   THE APP PROPERLY WHEN WE ALREADY HAVE THE REQUIRED DATA
   */
 
@@ -150,7 +144,7 @@ function App() {
   }, [ylide]);
 
   // useEffect to setup the account states with associated wallets and local/remote keys.
-  // this will register the remoteKey if available from ylide, 
+  // this will register the remoteKey if available from ylide,
   // otherwise we'll have to ask the user to publish their keys to the selected blockchain
   useEffect(() => {
     if (!wallets.length) {
@@ -278,8 +272,8 @@ function App() {
     })();
   }, []);
   /*
-  [END] USE EFFECTS FOR INITIALIZING THE STATE VARIABLES ON APP LOAD. 
-  WE CAN DO THIS ON USER INTERACTION TOO, ITS JUST BETTER TO MAKE SURE WE INITIALIZE 
+  [END] USE EFFECTS FOR INITIALIZING THE STATE VARIABLES ON APP LOAD.
+  WE CAN DO THIS ON USER INTERACTION TOO, ITS JUST BETTER TO MAKE SURE WE INITIALIZE
   THE APP PROPERLY WHEN WE ALREADY HAVE THE REQUIRED DATA
   */
 
@@ -573,6 +567,17 @@ function App() {
     );
     alert(`Post Message Sent with MessageId: ${msgId}`);
     console.log(`Post Message Sent with MessageId: ${msgId}`);
+
+    setSelectedRoomMsgs([
+      ...selectedRoomMsgs,
+      {
+        message: postBody,
+        sentTime: "just now",
+        sender: fromAcc.address,
+        direction: "outgoing",
+        position: "last",
+      }
+    ])
   }
 
   async function ReadPostMessages(addr: string, roomName: string) {
@@ -616,14 +621,14 @@ function App() {
           const sub = decodedContent.subject.split(":")[1];
           const msg = JSON.parse(decodedContent.content);
           console.log(`Post subject: ${sub}, body: ${msg}, room: ${msg['room']}`);
-          console.log(msg);
           if (msg['room'] == roomName) {
             allMsgs.push({
               'msg': msg,
-              'sub': sub
+              'sub': sub,
+              'sender': message.senderAddress,
+              'sentTime': message.createdAt,
             });
           }
-
         }
       } else {
         console.log("========= no public key!");
@@ -700,10 +705,13 @@ function App() {
   const handleCreatePostModalClose = () => setCreatePostModal(false);
   const handleCreatePostModalShow = () => setCreatePostModal(true);
 
-  const [selectedRoomMsgs, setSelectedRoomMsgs] = useState<{
-    'roomName': string,
-    'posts': { msg: any; sub: string; }[] | undefined
-  } | undefined>();
+  // const [selectedRoomMsgs, setSelectedRoomMsgs] = useState<{
+  //   'roomName': string,
+  //   'posts': { msg: any; sub: string; }[] | undefined
+  // } | undefined>();
+
+  const [selectedRoom, setSelectedRoom] = useState<string>();
+  const [selectedRoomMsgs, setSelectedRoomMsgs] = useState<MessageModel[]>([]);
 
   async function submitCreateRoomForm() {
     const rNameText = (document.getElementById('txtRoomName') as HTMLInputElement).value;
@@ -719,13 +727,21 @@ function App() {
     }
   }
 
-  async function submitCreatePostModal() {
-    const pTitle = (document.getElementById('txtPostTitle') as HTMLInputElement).value;
-    const pBody = (document.getElementById('txtPostBody') as HTMLInputElement).value;
-    if (currAcc && selectedRoomMsgs) {
-      await CreatePost(selectedRoomMsgs?.roomName, pTitle, pBody, currAcc.address);
-      alert("Post Created Successfully!");
-      handleCreatePostModalClose();
+  // async function submitCreatePostModal() {
+  //   const pTitle = (document.getElementById('txtPostTitle') as HTMLInputElement).value;
+  //   const pBody = (document.getElementById('txtPostBody') as HTMLInputElement).value;
+  //   if (currAcc && selectedRoom) {
+  //     await CreatePost(selectedRoom, pTitle, pBody, currAcc.address);
+  //     alert("Post Created Successfully!");
+  //     handleCreatePostModalClose();
+  //   } else {
+  //     alert("Account not connected.. please connect account");
+  //   }
+  // }
+
+  async function handleSendMessage(text: string) {
+    if (currAcc && selectedRoom) {
+      await CreatePost(selectedRoom, currAcc.address, text, currAcc.address);
     } else {
       alert("Account not connected.. please connect account");
     }
@@ -758,28 +774,37 @@ function App() {
     }
     const gotMsgs = await ReadPostMessages(currAcc.address, selectedRoom);
     console.log("========== all posts data is: ", gotMsgs);
-    setSelectedRoomMsgs({
-      'roomName': selectedRoom,
-      'posts': gotMsgs
-    });
+    setSelectedRoom(selectedRoom);
+
+    if (!gotMsgs) return;
+    const messages: MessageModel[] = gotMsgs
+      .sort(message => message.sentTime).reverse()
+      .map(message => {
+        return {
+          message: message.msg.post,
+          sentTime: message.sentTime.toLocaleString(),
+          sender: message.sender,
+          direction: message.sender.toLowerCase() === currAcc.address.toLowerCase() ? "outgoing" : "incoming",
+          position: "normal",
+        }
+      });
+    console.log('message models:', messages)
+    setSelectedRoomMsgs(messages);
     handleRoomMsgsModalShow();
   }
 
-  async function CreatePostMessageForRoom(selectedRoom: string | null) {
-    if (!currAcc) {
-      alert("Please connect your wallet to be able to generate Communication Keys");
-      return;
-    }
-    if (!selectedRoom) {
-      alert("No Room selected!");
-      return;
-    }
-    setSelectedRoomMsgs({
-      'roomName': selectedRoom,
-      'posts': []
-    });
-    handleCreatePostModalShow();
-  }
+  // async function CreatePostMessageForRoom(selectedRoom: string | null) {
+  //   if (!currAcc) {
+  //     alert("Please connect your wallet to be able to generate Communication Keys");
+  //     return;
+  //   }
+  //   if (!selectedRoom) {
+  //     alert("No Room selected!");
+  //     return;
+  //   }
+  //   setSelectedRoom(selectedRoom);
+  //   handleCreatePostModalShow();
+  // }
 
   return (
     <div className="App">
@@ -949,16 +974,16 @@ function App() {
                     size='sm'
                     variant="primary"
                   >
-                    Show My Messages
+                    Select this Room
                   </Button>
-                  {isRoomAdmin(r.roomData) ? <Button
+                  {/* {isRoomAdmin(r.roomData) ? <Button
                     className="btn-simple btn-icon ml-2"
                     onClick={() => CreatePostMessageForRoom(r.roomName)}
                     size='sm'
                     variant="primary"
                   >
                     Create New Post
-                  </Button> : ""}
+                  </Button> : ""} */}
                 </div>
               </Card>
             </Col>
@@ -1029,32 +1054,25 @@ function App() {
         size='lg'
       >
         <Modal.Header closeButton>
-          <Modal.Title>Showing Posts for {selectedRoomMsgs?.roomName}</Modal.Title>
+          <Modal.Title>Showing Posts for {selectedRoom}</Modal.Title>
         </Modal.Header>
-        <Form>
-          <Modal.Body>
-            {selectedRoomMsgs?.posts?.map(p => (
-              <Alert variant="success">
-                <Alert.Heading>{p.sub}</Alert.Heading>
-                <p>
-                  {p.msg.post}
-                </p>
-                <hr />
-                {/* <p className="mb-0">
-                  Message Sent Privately to you! Make sure no one looks at your screen!
-                </p> */}
-              </Alert>
-            ))}
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={handleRoomMsgsModalClose}>
-              Close
-            </Button>
-          </Modal.Footer>
-        </Form>
+
+        <div style={{ position: "relative", height: "500px" }}>
+          <MainContainer>
+            <ChatContainer>
+              <MessageList>
+                {selectedRoomMsgs && selectedRoomMsgs.map(message => (
+                  <Message model={message} />
+                ))}
+              </MessageList>
+              <MessageInput attachButton={false} placeholder="Type message here" onSend={handleSendMessage} disabled={!selectedRoom} />
+            </ChatContainer>
+          </MainContainer>
+        </div>
+
       </Modal>
 
-      <Modal
+      {/* <Modal
         show={createPostModal}
         onHide={handleCreatePostModalClose}
         backdrop="static"
@@ -1062,7 +1080,7 @@ function App() {
         size='lg'
       >
         <Modal.Header closeButton>
-          <Modal.Title>Create a new Post for {selectedRoomMsgs?.roomName}</Modal.Title>
+          <Modal.Title>Create a new Post for {selectedRoom}</Modal.Title>
         </Modal.Header>
         <Form>
           <Modal.Body>
@@ -1083,7 +1101,8 @@ function App() {
             </Button>
           </Modal.Footer>
         </Form>
-      </Modal>
+      </Modal> */}
+
     </div >
   );
 }
